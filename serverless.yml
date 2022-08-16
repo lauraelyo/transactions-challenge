@@ -1,0 +1,66 @@
+service: transactions-challenge
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  region:  us-east-1
+  environment:
+    DYNAMO_TABLE: ${self:custom.dynamoTable}
+    REGION_NAME: ${self:provider.region}
+    SES_SENDER: ${self:custom.sender}
+    SES_RECIPIENT: ${self:custom.recipient} 
+
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Resource: '*'
+          Action: 's3:*'
+        - Effect: 'Allow'
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMO_TABLE}"
+        - Effect: 'Allow'
+          Action: 
+            - 'ses:*' 
+          Resource: '*'  
+
+
+custom: #change this in order to use your own configurations
+  bucket: lree-transactions
+  dynamoTable: transactions-table
+  sender: laura.raelyo@gmail.com
+  recipient: laura.raelyo@gmail.com
+
+functions:
+  transactions:
+    handler: handler.transactions
+    events:
+      - s3: 
+          bucket: ${self:custom.bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .csv
+
+resources:
+  Resources:
+    ImagesDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMO_TABLE}
