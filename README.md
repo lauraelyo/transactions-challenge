@@ -40,4 +40,4 @@ functions:
 
 After successful deployment, you can upload a file in csv format to the s3 bucket configured.
 
-Sample format for the csv: link.
+Sample format for the csv: [transactions.csv](https://github.com/lauraelyo/transactions-challenge/blob/aa5a471de678475954a792bb29eaa9e35379177e/transactions.csv).
